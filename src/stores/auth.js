@@ -55,6 +55,27 @@ export const useAuthStore = defineStore('auth', () => {
     await fetchMe()
   }
 
+  // ── Anonymous login ──────────────────────────────────────────────────────
+  async function loginAnonymous(name) {
+    loading.value = true
+    try {
+      const res = await fetch(`${BACKEND_URL}/auth/anonymous`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      if (!res.ok) throw new Error('Erreur création utilisateur anonyme')
+      const data = await res.json()
+      setToken(data.token)
+      await fetchMe()
+      error.value = ''
+    } catch (e) {
+      error.value = 'Erreur lors de la connexion anonyme'
+    } finally {
+      loading.value = false
+    }
+  }
+
   // ── Logout ───────────────────────────────────────────────────────────────
   function logout() {
     setToken('')
@@ -67,7 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token, user, loading, error, isAuthenticated,
     setToken, fetchMe,
-    loginWithGoogle, loginWithGithub,
+    loginWithGoogle, loginWithGithub, loginAnonymous,
     handleCallback, logout,
   }
 })

@@ -46,6 +46,13 @@
           </div>
         </div>
       </div>
+
+      <!-- Finish button -->
+      <div class="finish-section">
+        <button class="btn-finish" @click="finishRetro">
+          ✓ Terminer et retourner à l'accueil
+        </button>
+      </div>
     </div>
 
     <!-- No summary yet -->
@@ -93,10 +100,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useRetroStore } from '../stores/retro'
+import { useHistoryStore } from '../stores/history'
 import { RETRO_FORMATS } from '../retro-formats.js'
 
+const router = useRouter()
 const store = useRetroStore()
+const historyStore = useHistoryStore()
 const openEntryId = ref(null)
 
 const history = computed(() => store.room?.history || [])
@@ -140,6 +151,29 @@ function formatDate(ts)  { return new Date(ts).toLocaleDateString('fr-FR', { day
 function formatEmoji(id) { return RETRO_FORMATS[id]?.emoji || '🔄' }
 function formatLabel(id) { return RETRO_FORMATS[id]?.name || id }
 function prioLabel(p)    { return { high:'🔴 Haute', medium:'🟡 Moyenne', low:'🟢 Faible' }[p] || p }
+
+function finishRetro() {
+  // Save session to history
+  if (store.room?.summary) {
+    const format = RETRO_FORMATS[store.room.format]
+    historyStore.addSession({
+      id: Date.now(),
+      roomCode: store.room.code,
+      format: store.room.format,
+      formatName: format?.name || store.room.format,
+      participantCount: Object.keys(store.room.participants || {}).length,
+      participants: Object.keys(store.room.participants || {}),
+      noteCount: Object.keys(store.room.notes || {}).length,
+      actionCount: Object.keys(store.room.actions || {}).length,
+      summary: store.room.summary,
+      actions: Object.values(store.room.actions || {}),
+      createdAt: store.room.summary.generatedAt || Date.now(),
+    })
+  }
+
+  // Redirect to dashboard
+  router.push('/')
+}
 </script>
 
 <style scoped>
@@ -216,4 +250,14 @@ function prioLabel(p)    { return { high:'🔴 Haute', medium:'🟡 Moyenne', lo
 .htext { flex: 1; }
 .howner { font-size: 11px; color: var(--accent); }
 .hdate { font-size: 10px; color: var(--muted); }
+
+/* Finish section */
+.finish-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center; }
+.btn-finish {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent); color: #fff; border: none;
+  border-radius: var(--rs); padding: 12px 28px;
+  font-size: 14px; font-weight: 700; font-family: 'Syne', sans-serif;
+}
+.btn-finish:hover { opacity: .85; transform: translateY(-1px); }
 </style>

@@ -15,9 +15,11 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useRetroStore } from '../stores/retro'
+import { useHistoryStore } from '../stores/history'
+import { RETRO_FORMATS } from '../retro-formats.js'
 import TopBar          from '../components/TopBar.vue'
 import StepFormatPicker from '../components/StepFormatPicker.vue'
 import StepIntro       from '../components/StepIntro.vue'
@@ -29,8 +31,10 @@ import StepSummary     from '../components/StepSummary.vue'
 import BottomBar       from '../components/BottomBar.vue'
 
 const route  = useRoute()
+const router = useRouter()
 const auth   = useAuthStore()
 const retro  = useRetroStore()
+const historyStore = useHistoryStore()
 const currentStep = ref(0)
 const toast = ref({ visible: false, msg: '' })
 
@@ -44,11 +48,43 @@ function gotoStep(step) {
   window.scrollTo(0, 0)
 }
 function nextStep() {
-  if (currentStep.value < 6) gotoStep(currentStep.value + 1)
-  else showToast('Rétro terminée ! 🎉')
+  if (currentStep.value < 6) {
+    gotoStep(currentStep.value + 1)
+  } else {
+    // Last step - save and redirect to dashboard
+    finishRetro()
+  }
 }
 function prevStep() {
   if (currentStep.value > 0) gotoStep(currentStep.value - 1)
+}
+
+function finishRetro() {
+  // Save session to history
+  if (retro.room?.summary) {
+    const format = RETRO_FORMATS[retro.room.format]
+    historyStore.addSession({
+      id: Date.now(),
+      roomCode: retro.room.code,
+      format: retro.room.format,
+      formatName: format?.name || retro.room.format,
+      participantCount: Object.keys(retro.room.participants || {}).length,
+      participants: Object.keys(retro.room.participants || {}),
+      noteCount: Object.keys(retro.room.notes || {}).length,
+      actionCount: Object.keys(retro.room.actions || {}).length,
+      summary: retro.room.summary,
+      actions: Object.values(retro.room.actions || {}),
+      createdAt: retro.room.summary.generatedAt || Date.now(),
+    })
+  }
+
+  // Show success toast
+  showToast('Rétro terminée ! 🎉')
+
+  // Redirect to dashboard after a short delay
+  setTimeout(() => {
+    router.push('/')
+  }, 800)
 }
 
 watch(() => retro.room?.step, (s) => { if (s != null && s !== currentStep.value) currentStep.value = s })

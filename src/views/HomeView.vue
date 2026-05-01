@@ -1,48 +1,70 @@
 <template>
   <div>
-    <LoginView v-if="!auth.isAuthenticated && !auth.loading" />
-
-    <div v-else-if="auth.loading" class="loading">
+    <div v-if="auth.loading" class="loading">
       <div class="spinner"></div>
     </div>
 
     <!-- Authenticated: join or create room -->
     <div v-else class="home">
       <div class="card">
-        <!-- User info -->
-        <div class="user-row">
+        <!-- User info (if authenticated) -->
+        <div v-if="auth.isAuthenticated" class="user-row">
           <img v-if="auth.user?.avatar" :src="auth.user.avatar" class="avatar" :alt="auth.user.name" />
           <div v-else class="avatar-placeholder">{{ auth.user?.name?.[0]?.toUpperCase() }}</div>
           <div class="user-info">
             <div class="user-name">{{ auth.user?.name }}</div>
-            <div class="user-email">{{ auth.user?.email }}</div>
+            <div class="user-email">{{ auth.user?.email || 'Anonyme' }}</div>
           </div>
           <button class="logout-btn" @click="auth.logout()">Déconnexion</button>
         </div>
 
-        <div class="divider-full"></div>
+        <div v-if="auth.isAuthenticated" class="divider-full"></div>
 
         <div class="logo">ITERO</div>
         <h1>Rétro<br><em>collaborative</em></h1>
-        <p>Crée une salle ou rejoins une session existante.</p>
 
-        <button class="btn-acc" @click="goCreate">✦ Créer une nouvelle salle</button>
+        <!-- Anonymous name input -->
+        <div v-if="!auth.isAuthenticated">
+          <p>Entre ton nom pour continuer :</p>
+          <div class="name-input-row">
+            <input
+              v-model="anonymousName"
+              placeholder="Ton nom"
+              maxlength="30"
+              class="name-input"
+              @keydown.enter="handleAnonymousLogin"
+            />
+            <button class="btn-start" @click="handleAnonymousLogin" :disabled="!anonymousName.trim()">
+              Commencer
+            </button>
+          </div>
 
-        <div class="divider"><span>ou rejoindre</span></div>
-
-        <div class="join-row">
-          <input
-            v-model="code"
-            placeholder="Code de salle"
-            maxlength="6"
-            class="code-input"
-            @input="code = code.toUpperCase()"
-            @keydown.enter="goJoin"
-          />
-          <button class="btn-join" @click="goJoin" :disabled="code.length < 4">Rejoindre →</button>
+          <div class="divider"><span>ou se connecter avec</span></div>
+          <LoginView />
         </div>
 
-        <p v-if="joinError" class="err">{{ joinError }}</p>
+        <!-- Authenticated view -->
+        <div v-else>
+          <p>Crée une salle ou rejoins une session existante.</p>
+
+          <button class="btn-acc" @click="goCreate">✦ Créer une nouvelle salle</button>
+
+          <div class="divider"><span>ou rejoindre</span></div>
+
+          <div class="join-row">
+            <input
+              v-model="code"
+              placeholder="Code de salle"
+              maxlength="6"
+              class="code-input"
+              @input="code = code.toUpperCase()"
+              @keydown.enter="goJoin"
+            />
+            <button class="btn-join" @click="goJoin" :disabled="code.length < 4">Rejoindre →</button>
+          </div>
+
+          <p v-if="joinError" class="err">{{ joinError }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -58,6 +80,12 @@ const auth   = useAuthStore()
 const router = useRouter()
 const code   = ref(new URLSearchParams(location.search).get('room') || '')
 const joinError = ref('')
+const anonymousName = ref('')
+
+async function handleAnonymousLogin() {
+  if (!anonymousName.value.trim()) return
+  await auth.loginAnonymous(anonymousName.value.trim())
+}
 
 function goCreate() {
   router.push('/retro?action=create')
@@ -205,4 +233,30 @@ p { font-size: 13px; color: var(--muted2); line-height: 1.6; margin-bottom: 20px
 .btn-join:not(:disabled):hover { background: var(--surface3); }
 .btn-join:disabled { opacity: .3; cursor: not-allowed; }
 .err { font-size: 12px; color: var(--stop); margin-top: 10px; }
+
+/* Anonymous login */
+.name-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.name-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--rs);
+  padding: 10px 13px;
+  font-size: 14px;
+  transition: border-color .2s;
+}
+.name-input:focus { border-color: var(--accent-b); }
+.name-input::placeholder { color: var(--muted); }
+.btn-start {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--rs);
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn-start:not(:disabled):hover { opacity: .85; }
+.btn-start:disabled { opacity: .3; cursor: not-allowed; }
 </style>
