@@ -1,0 +1,55 @@
+:root {
+  --bg: #0e0e10;
+  --surface: #18181c;
+  --surface2: #222228;
+  --surface3: #2a2a32;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #f0efe8;
+  --muted: #77766f;
+  --muted2: #aaa9a0;
+  --start: #4ade80;
+  --start-dim: rgba(74,222,128,0.1);
+  --start-b: rgba(74,222,128,0.25);
+  --stop: #f87171;
+  --stop-dim: rgba(248,113,113,0.1);
+  --stop-b: rgba(248,113,113,0.25);
+  --cont: #60a5fa;
+  --cont-dim: rgba(96,165,250,0.1);
+  --cont-b: rgba(96,165,250,0.25);
+  --accent: #a78bfa;
+  --accent-dim: rgba(167,139,250,0.12);
+  --accent-b: rgba(167,139,250,0.3);
+  --r: 12px;
+  --rs: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 { font-family: 'Syne', sans-serif; }
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+input, select {
+  font-family: inherit;
+  color: var(--text);
+}
+
+input:focus, select:focus { outline: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
