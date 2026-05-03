@@ -1,0 +1,17 @@
+{
+  "name": "Itero - Rétro Collaborative",
+  "short_name": "Itero",
+  "description": "Application collaborative de rétrospectives agiles",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

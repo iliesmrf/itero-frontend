@@ -24,7 +24,14 @@ const router = createRouter({
 router.beforeEach((to) => {
   if (to.meta.requiresAuth) {
     const auth = useAuthStore()
-    if (!auth.isAuthenticated) return '/'
+    if (!auth.isAuthenticated) {
+      // Save pending room code before redirecting to auth
+      const roomCode = to.query.room
+      if (roomCode) {
+        localStorage.setItem('itero_pending_room', roomCode)
+      }
+      return '/'
+    }
   }
 })
 
