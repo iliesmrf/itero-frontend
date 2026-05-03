@@ -8,6 +8,13 @@
         @click="$emit('goto', i)">{{ label }}</div>
     </div>
     <div class="right">
+      <div class="presence">
+        <div v-for="participant in participants" :key="participant.name" class="av" :title="participant.name"
+          :style="{ background: participant.color, color: participant.textColor }">
+          <img v-if="participant.avatar" :src="participant.avatar" :alt="participant.name" class="av-img" />
+          <span v-else>{{ participant.name[0].toUpperCase() }}</span>
+        </div>
+      </div>
       <div class="chip" @click="copyLink()" title="Copier le lien">{{ room?.code }}</div>
       <div class="sync"><div class="dot" :class="{ live: connected, err: !connected }"></div></div>
       <div class="user-menu" @click="toggleUserMenu" v-click-outside="closeUserMenu">
@@ -40,6 +47,10 @@ const showUserMenu = ref(false)
 
 const room      = computed(() => store.room)
 const connected = computed(() => store.connected)
+const participants = computed(() => {
+  if (!room.value?.participants) return []
+  return Object.values(room.value.participants).filter(p => p.name !== auth.user?.name)
+})
 
 const currentUser = computed(() => auth.user || null)
 
@@ -89,6 +100,10 @@ onUnmounted(() => {
 .pill.active { background:var(--accent-dim);border-color:var(--accent-b);color:var(--accent); }
 .pill.done { background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.18);color:var(--start); }
 .right { display:flex;align-items:center;gap:8px;flex-shrink:0; }
+.presence { display:flex; align-items:center; gap:6px; }
+.av { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;border:2px solid var(--bg);overflow:hidden; }
+.av:hover { transform:scale(1.05); }
+.av-img { width:100%;height:100%;object-fit:cover; }
 .chip { font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:3px 10px;color:var(--muted2);cursor:pointer;letter-spacing:.1em;font-family:'Syne',sans-serif;font-weight:700; }
 .chip:hover { border-color:var(--accent-b);color:var(--accent); }
 .sync { display:flex;align-items:center; }
@@ -98,7 +113,6 @@ onUnmounted(() => {
 .user-menu { position:relative;cursor:pointer; }
 .user-avatar { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;border:2px solid var(--bg);transition:transform .2s;overflow:hidden; }
 .user-avatar:hover { transform:scale(1.1); }
-.av-img { width:100%;height:100%;object-fit:cover; }
 .dropdown { position:absolute;top:100%;right:0;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 0;min-width:140px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.15); }
 .dropdown-item { display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;color:var(--text);cursor:pointer;transition:background .2s; }
 .dropdown-item:hover { background:var(--surface2); }
