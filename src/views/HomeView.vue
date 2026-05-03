@@ -15,7 +15,7 @@
             <div class="user-name">{{ auth.user?.name }}</div>
             <div class="user-email">{{ auth.user?.email || 'Anonyme' }}</div>
           </div>
-          <button class="logout-btn" @click="auth.logout()">Déconnexion</button>
+          <button class="logout-btn" @click="handleLogout">Déconnexion</button>
         </div>
 
         <div v-if="auth.isAuthenticated" class="divider-full"></div>
@@ -85,6 +85,10 @@ const anonymousName = ref('')
 async function handleAnonymousLogin() {
   if (!anonymousName.value.trim()) return
   await auth.loginAnonymous(anonymousName.value.trim())
+}
+
+async function handleLogout() {
+  await auth.logout()
 }
 
 function goCreate() {

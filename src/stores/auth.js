@@ -77,9 +77,27 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // ── Logout ───────────────────────────────────────────────────────────────
-  function logout() {
+  async function logout() {
+    try {
+      // Call backend logout endpoint for OAuth cleanup
+      await fetch(`${BACKEND_URL}/auth/logout`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token.value}` },
+      })
+    } catch (e) {
+      // Ignore errors - logout should work even if backend is unreachable
+      console.warn('Backend logout failed:', e)
+    }
+
+    // Clear local state
     setToken('')
     user.value = null
+    error.value = ''
+
+    // Redirect to home page
+    if (typeof window !== 'undefined') {
+      window.location.href = '/'
+    }
   }
 
   // Auto-fetch user if token exists on load

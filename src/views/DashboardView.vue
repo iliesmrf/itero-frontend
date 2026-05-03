@@ -15,7 +15,7 @@
           <img v-if="auth.user?.avatar" :src="auth.user.avatar" class="avatar-sm" :alt="auth.user.name" />
           <div v-else class="avatar-sm-placeholder">{{ auth.user?.name?.[0]?.toUpperCase() }}</div>
           <span class="user-name-sm">{{ auth.user?.name }}</span>
-          <button class="logout-btn-sm" @click="auth.logout()">Déconnexion</button>
+          <button class="logout-btn-sm" @click="handleLogout">Déconnexion</button>
         </div>
       </div>
 
@@ -160,6 +160,10 @@ const expandedSession = ref(null)
 async function handleAnonymousLogin() {
   if (!anonymousName.value.trim()) return
   await auth.loginAnonymous(anonymousName.value.trim())
+}
+
+async function handleLogout() {
+  await auth.logout()
 }
 
 function createRoom() {
