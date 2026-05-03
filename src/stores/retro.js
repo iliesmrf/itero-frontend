@@ -78,12 +78,20 @@ export const useRetroStore = defineStore('retro', () => {
   function addAction(text, owner, date, priority) { socket?.emit('action:add', { text, owner, date, priority }) }
   function deleteAction(id) { socket?.emit('action:delete', { actionId: id }) }
   function generateSummary() { socket?.emit('summary:generate') }
+  function leaveRoom() {
+    if (!socket) return
+    socket.emit('room:leave')
+    socket.disconnect()
+    room.value = null
+    me.value = null
+    connected.value = false
+  }
   function clearError()    { error.value = '' }
 
   return {
     room, me, connected, error, summaryGenerating,
     format, cols, myVotes, myVotesUsed,
-    initSocket, createRoom, joinRoom, setStep, setFormat,
+    initSocket, createRoom, joinRoom, leaveRoom, setStep, setFormat,
     addNote, deleteNote, runAutoClusters,
     castVote, removeVote, addAction, deleteAction,
     generateSummary, clearError,

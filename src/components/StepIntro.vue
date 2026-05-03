@@ -4,7 +4,7 @@
     <div class="grid">
       <div>
         <div class="badge"><span class="ldot"></span> Session en direct</div>
-        <h1>Rétro<br><em>Start · Stop<br>· Continue</em></h1>
+        <h1>Rétro</h1>
         <p>Un cadre structuré pour réfléchir ensemble et décider des prochaines actions.</p>
         <div class="rules">
           <div class="rule" v-for="r in rules" :key="r.title">

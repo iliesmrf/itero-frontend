@@ -23,8 +23,12 @@
           <span v-else>{{ currentUser?.name?.[0]?.toUpperCase() }}</span>
         </div>
         <div class="dropdown" v-show="showUserMenu">
-          <div class="dropdown-item" @click="handleLogout">
+          <div class="dropdown-item" @click="handleLeaveRoom">
             <span class="icon">🚪</span>
+            Quitter la session
+          </div>
+          <div class="dropdown-item" @click="handleLogout">
+            <span class="icon">❌</span>
             Se déconnecter
           </div>
         </div>
@@ -35,11 +39,13 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useRetroStore } from '../stores/retro'
 import { useAuthStore } from '../stores/auth'
 
 const store = useRetroStore()
 const auth = useAuthStore()
+const router = useRouter()
 defineProps({ currentStep: Number })
 defineEmits(['goto'])
 
@@ -67,6 +73,12 @@ function toggleUserMenu() {
 
 function closeUserMenu() {
   showUserMenu.value = false
+}
+
+async function handleLeaveRoom() {
+  closeUserMenu()
+  store.leaveRoom()
+  router.push('/')
 }
 
 async function handleLogout() {
