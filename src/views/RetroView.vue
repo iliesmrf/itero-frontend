@@ -1,8 +1,8 @@
 <template>
   <div>
     <TopBar         :current-step="currentStep" @goto="gotoStep" />
-    <StepFormatPicker v-if="currentStep === 0" @next="nextStep" />
-    <StepIntro        v-if="currentStep === 1" @next="nextStep" />
+    <StepIntro        v-if="currentStep === 0" @next="nextStep" />
+    <StepFormatPicker v-if="currentStep === 1" @next="nextStep" />
     <StepCollect      v-if="currentStep === 2" />
     <StepGroup        v-if="currentStep === 3" />
     <StepVote         v-if="currentStep === 4" />

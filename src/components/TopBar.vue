@@ -17,6 +17,7 @@
       </div>
       <div class="chip" @click="copyLink()" title="Copier le lien">{{ room?.code }}</div>
       <div class="sync"><div class="dot" :class="{ live: connected, err: !connected }"></div></div>
+      <button class="logout-btn" @click="handleLogout" title="Se déconnecter">🚪</button>
     </div>
   </div>
 </template>
@@ -24,8 +25,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useRetroStore } from '../stores/retro'
+import { useAuthStore } from '../stores/auth'
 
 const store = useRetroStore()
+const auth = useAuthStore()
 defineProps({ currentStep: Number })
 defineEmits(['goto'])
 
@@ -33,11 +36,15 @@ const room         = computed(() => store.room)
 const connected    = computed(() => store.connected)
 const participants = computed(() => Object.values(store.room?.participants || {}))
 
-const steps = ['① Format', '② Intro', '③ Collecter', '④ Grouper', '⑤ Voter', '⑥ Actions', '⑦ Résumé']
+const steps = ['① Intro', '② Format', '③ Collecter', '④ Grouper', '⑤ Voter', '⑥ Actions', '⑦ Résumé']
 
 function copyLink() {
   const url = `${location.origin}${location.pathname}?room=${store.room?.code}`
   navigator.clipboard.writeText(url).then(() => {}).catch(() => {})
+}
+
+async function handleLogout() {
+  await auth.logout()
 }
 </script>
 
@@ -61,5 +68,7 @@ function copyLink() {
 .dot { width:5px;height:5px;border-radius:50%;background:var(--muted);transition:background .3s; }
 .dot.live { background:var(--start);animation:pulse 1.5s infinite; }
 .dot.err  { background:var(--stop); }
+.logout-btn { background:none;border:1px solid var(--border2);border-radius:6px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:var(--muted2);transition:all .2s; }
+.logout-btn:hover { border-color:var(--stop);color:var(--stop);background:rgba(239,68,68,.05); }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
 </style>
