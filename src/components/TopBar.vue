@@ -17,13 +17,24 @@
       </div>
       <div class="chip" @click="copyLink()" title="Copier le lien">{{ room?.code }}</div>
       <div class="sync"><div class="dot" :class="{ live: connected, err: !connected }"></div></div>
-      <button class="logout-btn" @click="handleLogout" title="Se déconnecter">🚪</button>
+      <div class="user-menu" @click="toggleUserMenu" v-click-outside="closeUserMenu">
+        <div class="user-avatar" :style="{ background: currentUser?.color, color: currentUser?.textColor }">
+          <img v-if="currentUser?.avatar" :src="currentUser.avatar" :alt="currentUser.name" class="av-img" />
+          <span v-else>{{ currentUser?.name?.[0]?.toUpperCase() }}</span>
+        </div>
+        <div class="dropdown" v-show="showUserMenu">
+          <div class="dropdown-item" @click="handleLogout">
+            <span class="icon">🚪</span>
+            Se déconnecter
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRetroStore } from '../stores/retro'
 import { useAuthStore } from '../stores/auth'
 
@@ -31,6 +42,18 @@ const store = useRetroStore()
 const auth = useAuthStore()
 defineProps({ currentStep: Number })
 defineEmits(['goto'])
+
+const showUserMenu = ref(false)
+
+const room         = computed(() => store.room)
+const connected    = computed(() => store.connected)
+const participants = computed(() => Object.values(store.room?.participants || {}))
+
+// L'utilisateur actuel est probablement le premier participant ou celui qui correspond à auth.user
+const currentUser = computed(() => {
+  if (!auth.user) return null
+  return participants.value.find(p => p.name === auth.user.name) || participants.value[0]
+})
 
 const room         = computed(() => store.room)
 const connected    = computed(() => store.connected)
@@ -43,9 +66,34 @@ function copyLink() {
   navigator.clipboard.writeText(url).then(() => {}).catch(() => {})
 }
 
+function toggleUserMenu() {
+  showUserMenu.value = !showUserMenu.value
+}
+
+function closeUserMenu() {
+  showUserMenu.value = false
+}
+
 async function handleLogout() {
+  closeUserMenu()
   await auth.logout()
 }
+
+// Fermer le menu quand on clique ailleurs
+function handleClickOutside(event) {
+  const userMenu = event.target.closest('.user-menu')
+  if (!userMenu) {
+    closeUserMenu()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
