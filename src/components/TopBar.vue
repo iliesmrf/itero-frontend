@@ -116,7 +116,12 @@ onUnmounted(() => {
 .dot { width:5px;height:5px;border-radius:50%;background:var(--muted);transition:background .3s; }
 .dot.live { background:var(--start);animation:pulse 1.5s infinite; }
 .dot.err  { background:var(--stop); }
-.logout-btn { background:none;border:1px solid var(--border2);border-radius:6px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:var(--muted2);transition:all .2s; }
-.logout-btn:hover { border-color:var(--stop);color:var(--stop);background:rgba(239,68,68,.05); }
+.user-menu { position:relative;cursor:pointer; }
+.user-avatar { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;border:2px solid var(--bg);transition:transform .2s;overflow:hidden; }
+.user-avatar:hover { transform:scale(1.1); }
+.dropdown { position:absolute;top:100%;right:0;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 0;min-width:140px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.15); }
+.dropdown-item { display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;color:var(--text);cursor:pointer;transition:background .2s; }
+.dropdown-item:hover { background:var(--surface2); }
+.dropdown-item .icon { font-size:14px; }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
 </style>
