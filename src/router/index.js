@@ -22,6 +22,11 @@ const router = createRouter({
       component: () => import('../views/DodView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/pi',
+      component: () => import('../views/PIView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
