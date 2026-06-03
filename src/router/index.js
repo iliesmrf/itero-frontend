@@ -17,6 +17,11 @@ const router = createRouter({
       component: () => import('../views/RetroView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/dod',
+      component: () => import('../views/DodView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

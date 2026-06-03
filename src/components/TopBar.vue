@@ -46,7 +46,13 @@ import { useAuthStore } from '../stores/auth'
 const store = useRetroStore()
 const auth = useAuthStore()
 const router = useRouter()
-defineProps({ currentStep: Number })
+const props = defineProps({
+  currentStep: Number,
+  steps: {
+    type: Array,
+    default: () => ['① Intro', '② Format', '③ Collecter', '④ Grouper', '⑤ Voter', '⑥ Actions', '⑦ Résumé'],
+  },
+})
 defineEmits(['goto'])
 
 const showUserMenu = ref(false)
@@ -60,7 +66,7 @@ const participants = computed(() => {
 
 const currentUser = computed(() => auth.user || null)
 
-const steps = ['① Intro', '② Format', '③ Collecter', '④ Grouper', '⑤ Voter', '⑥ Actions', '⑦ Résumé']
+const steps = computed(() => props.steps)
 
 function copyLink() {
   const url = `${location.origin}${location.pathname}?room=${store.room?.code}`
