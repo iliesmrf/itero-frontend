@@ -44,12 +44,20 @@
         <div class="action-card accent-card" @click="createRoom">
           <div class="action-icon">✦</div>
           <div class="action-content">
-            <div class="action-title">Créer une nouvelle session</div>
-            <div class="action-desc">Démarre une rétrospective collaborative</div>
+            <div class="action-title">Créer une rétrospective</div>
+            <div class="action-desc">Démarre une rétro collaborative</div>
           </div>
         </div>
 
-        <div class="action-card">
+        <div class="action-card dod-card" @click="createDod">
+          <div class="action-icon">✅</div>
+          <div class="action-content">
+            <div class="action-title">Atelier Definition of Done</div>
+            <div class="action-desc">Définissez collectivement vos critères de qualité</div>
+          </div>
+        </div>
+
+        <div class="action-card join-card">
           <div class="action-icon">🔗</div>
           <div class="action-content">
             <div class="action-title">Rejoindre une session</div>
@@ -168,6 +176,10 @@ async function handleLogout() {
 
 function createRoom() {
   router.push('/retro?action=create')
+}
+
+function createDod() {
+  router.push('/dod?action=create')
 }
 
 function joinRoom() {
@@ -394,7 +406,7 @@ h1 {
 /* Actions */
 .actions-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
   margin-bottom: 48px;
 }
@@ -421,6 +433,22 @@ h1 {
 .accent-card:hover {
   background: var(--accent);
   color: #fff;
+}
+.dod-card {
+  background: rgba(74,222,128,0.06);
+  border-color: rgba(74,222,128,0.2);
+}
+.dod-card:hover {
+  background: rgba(74,222,128,0.14);
+  border-color: rgba(74,222,128,0.4);
+}
+.join-card {
+  cursor: default;
+}
+.join-card:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border2);
 }
 .action-icon {
   font-size: 32px;

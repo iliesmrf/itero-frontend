@@ -1,4 +1,18 @@
 export const RETRO_FORMATS = {
+  'dod': {
+    id: 'dod',
+    name: 'Definition of Done',
+    emoji: '✅',
+    description: 'Définir collectivement les critères de qualité de l\'équipe.',
+    hidden: true,
+    cols: [
+      { key: 'code',   label: 'Code',         color: '#4ade80', dim: 'rgba(74,222,128,0.1)',   border: 'rgba(74,222,128,0.25)',   sub: 'Standards, review, linting' },
+      { key: 'tests',  label: 'Tests',         color: '#60a5fa', dim: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.25)',   sub: 'Automatisation et couverture' },
+      { key: 'review', label: 'Revue',         color: '#a78bfa', dim: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.3)',   sub: 'Peer review et approbation' },
+      { key: 'doc',    label: 'Documentation', color: '#facc15', dim: 'rgba(250,204,21,0.1)',   border: 'rgba(250,204,21,0.25)',   sub: 'README, specs, commentaires' },
+      { key: 'deploy', label: 'Déploiement',   color: '#fb923c', dim: 'rgba(251,146,60,0.1)',   border: 'rgba(251,146,60,0.25)',   sub: 'CI/CD, staging, monitoring' },
+    ],
+  },
   'start-stop-continue': {
     id: 'start-stop-continue',
     name: 'Start · Stop · Continue',
@@ -61,4 +75,4 @@ export const RETRO_FORMATS = {
   },
 }
 
-export const FORMAT_LIST = Object.values(RETRO_FORMATS)
+export const FORMAT_LIST = Object.values(RETRO_FORMATS).filter(f => !f.hidden)
