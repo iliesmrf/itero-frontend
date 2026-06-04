@@ -57,6 +57,14 @@
           </div>
         </div>
 
+        <div class="action-card pi-card" @click="createPI">
+          <div class="action-icon">🗓️</div>
+          <div class="action-content">
+            <div class="action-title">PI Planning</div>
+            <div class="action-desc">Planifiez sprints, capacité, US et risques</div>
+          </div>
+        </div>
+
         <div class="action-card join-card">
           <div class="action-icon">🔗</div>
           <div class="action-content">
@@ -182,6 +190,10 @@ function createDod() {
   router.push('/dod?action=create')
 }
 
+function createPI() {
+  router.push('/pi?action=create')
+}
+
 function joinRoom() {
   if (code.value.length < 4) return
   router.push(`/retro?room=${code.value}`)
@@ -208,6 +220,7 @@ function formatDate(ts) {
 }
 
 function getFormatEmoji(formatId) {
+  if (formatId === 'pi') return '🗓️'
   return RETRO_FORMATS[formatId]?.emoji || '🔄'
 }
 
@@ -441,6 +454,14 @@ h1 {
 .dod-card:hover {
   background: rgba(74,222,128,0.14);
   border-color: rgba(74,222,128,0.4);
+}
+.pi-card {
+  background: rgba(96,165,250,0.06);
+  border-color: rgba(96,165,250,0.2);
+}
+.pi-card:hover {
+  background: rgba(96,165,250,0.14);
+  border-color: rgba(96,165,250,0.4);
 }
 .join-card {
   cursor: default;
