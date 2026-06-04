@@ -61,7 +61,8 @@
           </div>
           <div class="sc-stories">
             <div v-if="!(store.storiesBySprint[sprint.id] || []).length" class="sc-empty">Aucune US</div>
-            <div v-for="us in (store.storiesBySprint[sprint.id] || [])" :key="us.id" class="sc-us">
+            <div v-for="us in (store.storiesBySprint[sprint.id] || [])" :key="us.id"
+              class="sc-us clickable" @click="selectedUS = selectedUS?.id === us.id ? null : us">
               <span class="us-prio" :style="{ background: prioColor(us.priority) }"></span>
               <span class="us-title">{{ us.title }}</span>
               <span class="us-pts-badge">{{ us.points }}</span>
@@ -111,10 +112,40 @@
     <div class="section">
       <div class="section-title">Participants</div>
       <div class="p-tags">
-        <span v-for="p in participantNames" :key="p" class="p-tag">{{ p }}</span>
+        <span v-for="p in contributorNames" :key="p" class="p-tag">{{ p }}</span>
       </div>
     </div>
   </div>
+
+  <!-- US Detail drawer -->
+  <transition name="drawer">
+    <div v-if="selectedUS" class="us-drawer" @click.self="selectedUS = null">
+      <div class="us-drawer-card">
+        <div class="usd-header">
+          <div class="usd-prio-badge" :style="{ background: prioDim(selectedUS.priority), borderColor: prioColor(selectedUS.priority) }">
+            <span class="usd-prio-dot" :style="{ background: prioColor(selectedUS.priority) }"></span>
+            {{ prioLabel(selectedUS.priority) }}
+          </div>
+          <button class="usd-close" @click="selectedUS = null">✕</button>
+        </div>
+        <div class="usd-title">{{ selectedUS.title }}</div>
+        <div class="usd-meta">
+          <div class="usd-row">
+            <span class="usd-label">Points</span>
+            <span class="usd-val pts-val">{{ selectedUS.points }} pts</span>
+          </div>
+          <div class="usd-row">
+            <span class="usd-label">Auteur</span>
+            <span class="usd-val">{{ selectedUS.author }}</span>
+          </div>
+          <div class="usd-row">
+            <span class="usd-label">Sprint</span>
+            <span class="usd-val">{{ sprintName(selectedUS.sprintId) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup>
@@ -124,7 +155,8 @@ import { usePIStore } from '../stores/pi'
 const store = usePIStore()
 defineEmits(['finish'])
 
-const copied = ref(false)
+const copied     = ref(false)
+const selectedUS = ref(null)
 
 const totalPoints   = computed(() => store.storyList.reduce((s, us) => s + (us.points || 0), 0))
 const totalCapacity = computed(() =>
@@ -132,7 +164,20 @@ const totalCapacity = computed(() =>
     sum + Object.values(cap).reduce((s, d) => s + (d || 0), 0), 0)
 )
 
-const participantNames = computed(() => Object.keys(store.room?.participants || {}))
+// Show all contributors: current participants + any past author still in stories
+const contributorNames = computed(() => {
+  const names = new Set(Object.keys(store.room?.participants || {}))
+  for (const s of store.storyList) if (s.author) names.add(s.author)
+  return [...names]
+})
+
+function sprintName(sprintId) {
+  if (!sprintId) return 'Backlog'
+  const sprint = store.sprints.find(s => s.id === sprintId)
+  return sprint?.name || sprintId
+}
+function prioLabel(p) { return { high: '🔴 Haute', medium: '🟡 Moyenne', low: '🟢 Faible' }[p] || 'Moyenne' }
+function prioDim(p)   { return { high: 'rgba(248,113,113,0.08)', medium: 'rgba(250,204,21,0.08)', low: 'rgba(74,222,128,0.08)' }[p] || '' }
 
 const avgColor = computed(() => {
   const avg = Number(store.confidenceAvg)
@@ -264,4 +309,25 @@ function copyPlan() {
 
 .p-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .p-tag { background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; padding: 3px 10px; font-size: 11px; }
+
+.sc-us.clickable { cursor: pointer; }
+.sc-us.clickable:hover { background: var(--surface3); }
+
+/* US Drawer */
+.us-drawer { position: fixed; inset: 0; z-index: 600; display: flex; align-items: flex-end; justify-content: center; background: rgba(0,0,0,.4); backdrop-filter: blur(2px); padding: 0 0 80px; }
+.us-drawer-card { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r); padding: 20px; width: 100%; max-width: 480px; margin: 0 16px; }
+.usd-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.usd-prio-badge { display: inline-flex; align-items: center; gap: 6px; border: 1px solid; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
+.usd-prio-dot { width: 6px; height: 6px; border-radius: 50%; }
+.usd-close { background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 8px; }
+.usd-close:hover { color: var(--text); }
+.usd-title { font-size: 16px; font-weight: 700; line-height: 1.4; margin-bottom: 16px; }
+.usd-meta { display: flex; flex-direction: column; gap: 8px; }
+.usd-row { display: flex; align-items: center; gap: 12px; }
+.usd-label { font-size: 11px; color: var(--muted2); min-width: 60px; text-transform: uppercase; letter-spacing: .04em; }
+.usd-val { font-size: 13px; font-weight: 600; }
+.pts-val { color: var(--cont); }
+
+.drawer-enter-active, .drawer-leave-active { transition: opacity .2s, transform .2s; }
+.drawer-enter-from, .drawer-leave-to { opacity: 0; transform: translateY(20px); }
 </style>

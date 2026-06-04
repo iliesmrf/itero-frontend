@@ -17,56 +17,33 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import { io } from 'socket.io-client'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
+const TYPE_ROUTES = { retro: '/retro', dod: '/dod', pi: '/pi', vision: '/vision' }
+
 const route  = useRoute()
 const router = useRouter()
-const auth   = useAuthStore()
 
 const phase    = ref('detecting')
 const errorMsg = ref('')
-
-function probe(namespace, code) {
-  return new Promise((resolve, reject) => {
-    const url    = namespace ? `${BACKEND_URL}/${namespace}` : BACKEND_URL
-    const socket = io(url, { autoConnect: false, auth: { token: auth.token } })
-    const timer  = setTimeout(() => { socket.disconnect(); reject() }, 5000)
-
-    socket.on('room:joined', (d) => {
-      clearTimeout(timer)
-      socket.disconnect()
-      resolve({ namespace, room: d.room })
-    })
-    socket.on('error', () => { clearTimeout(timer); socket.disconnect(); reject() })
-    socket.on('connect_error', () => { clearTimeout(timer); socket.disconnect(); reject() })
-    socket.on('connect', () => socket.emit('room:join', { code }))
-    socket.connect()
-  })
-}
-
-function routeFrom(namespace, room) {
-  if (namespace === 'pi')     return '/pi'
-  if (namespace === 'vision') return '/vision'
-  return room?.format === 'dod' ? '/dod' : '/retro'
-}
 
 onMounted(async () => {
   const code = route.query.room?.toUpperCase()
   if (!code) { router.replace('/'); return }
 
   try {
-    const { namespace, room } = await Promise.any([
-      probe('',       code),
-      probe('pi',     code),
-      probe('vision', code),
-    ])
-    router.replace(`${routeFrom(namespace, room)}?room=${code}`)
+    const res = await fetch(`${BACKEND_URL}/rooms/${code}`)
+    if (!res.ok) {
+      phase.value    = 'error'
+      errorMsg.value = res.status === 404 ? 'Session introuvable ou expirée.' : 'Erreur serveur.'
+      return
+    }
+    const { type } = await res.json()
+    router.replace(`${TYPE_ROUTES[type] || '/retro'}?room=${code}`)
   } catch {
     phase.value    = 'error'
-    errorMsg.value = 'Session introuvable ou expirée.'
+    errorMsg.value = 'Impossible de joindre le serveur. Vérifie ta connexion.'
   }
 })
 </script>

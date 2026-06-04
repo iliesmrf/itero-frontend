@@ -42,6 +42,7 @@ export const useHistoryStore = defineStore('history', () => {
       actionCount: session.actionCount || 0,
       summary: session.summary || null,
       actions: session.actions || [],
+      piData: session.piData || null,
       createdAt: session.createdAt || Date.now(),
     }
 

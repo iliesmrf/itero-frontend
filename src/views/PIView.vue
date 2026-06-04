@@ -70,6 +70,12 @@ function finish() {
     actionCount: Object.keys(pi.room?.risks || {}).length,
     summary: null,
     actions: [],
+    piData: {
+      stories: Object.values(pi.room?.stories || {}),
+      risks:   Object.values(pi.room?.risks   || {}),
+      config:  pi.room?.config  || null,
+      sprints: pi.room?.sprints || [],
+    },
     createdAt: Date.now(),
   })
   showToast('PI Planning terminé ! 🚀')

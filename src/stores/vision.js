@@ -21,9 +21,10 @@ export const useVisionStore = defineStore('vision', () => {
       auth: { token },
     })
 
-    socket.on('connect',    () => { connected.value = true })
-    socket.on('disconnect', () => { connected.value = false })
-    socket.on('error',      (d) => { error.value = d.message })
+    socket.on('connect',       () => { connected.value = true })
+    socket.on('disconnect',    () => { connected.value = false })
+    socket.on('error',         (d) => { error.value = d.message })
+    socket.on('connect_error', (e) => { error.value = `Connexion impossible: ${e.message}` })
 
     socket.on('room:joined', (d) => {
       room.value = {

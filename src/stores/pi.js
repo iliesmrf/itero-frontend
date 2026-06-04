@@ -41,9 +41,10 @@ export const usePIStore = defineStore('pi', () => {
       auth: { token },
     })
 
-    socket.on('connect',    () => { connected.value = true })
-    socket.on('disconnect', () => { connected.value = false })
-    socket.on('error',      (d) => { error.value = d.message })
+    socket.on('connect',       () => { connected.value = true })
+    socket.on('disconnect',    () => { connected.value = false })
+    socket.on('error',         (d) => { error.value = d.message })
+    socket.on('connect_error', (e) => { error.value = `Connexion impossible: ${e.message}` })
 
     socket.on('room:joined', (d) => {
       room.value = {
@@ -110,18 +111,14 @@ export const usePIStore = defineStore('pi', () => {
   }
 
   function addStory(title, points, sprintId, priority) {
-    if (!room.value) return null
-    const story = {
-      id:       `story-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      title, points: Number(points) || 0,
+    if (!room.value) return
+    // Don't add locally — server creates the canonical ID and broadcasts pi:story:added to all.
+    socket?.emit('pi:story:add', {
+      title:    title.trim(),
+      points:   Number(points) || 0,
       sprintId: sprintId || null,
       priority: priority || 'medium',
-      author:   me.value?.name || 'Anonyme',
-      createdAt: Date.now(),
-    }
-    room.value.stories[story.id] = story
-    socket?.emit('pi:story:add', story)
-    return story
+    })
   }
 
   function updateStory(storyId, updates) {
@@ -138,15 +135,12 @@ export const usePIStore = defineStore('pi', () => {
 
   function addRisk(title, level, mitigation) {
     if (!room.value) return
-    const risk = {
-      id:         `risk-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      title, level: level || 'medium',
+    // Don't add locally — server creates the canonical ID and broadcasts pi:risk:added to all.
+    socket?.emit('pi:risk:add', {
+      title,
+      level:      level || 'medium',
       mitigation: mitigation || '',
-      author:     me.value?.name || 'Anonyme',
-      createdAt:  Date.now(),
-    }
-    room.value.risks[risk.id] = risk
-    socket?.emit('pi:risk:add', risk)
+    })
   }
 
   function deleteRisk(riskId) {
