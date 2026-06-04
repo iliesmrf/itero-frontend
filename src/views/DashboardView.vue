@@ -88,6 +88,15 @@
               />
               <button class="btn-join-sm" @click="joinRoom" :disabled="code.length < 4">Rejoindre</button>
             </div>
+            <div v-if="recentSessions.length" class="recent-sessions">
+              <div class="recent-label">Sessions récentes</div>
+              <div v-for="s in recentSessions" :key="s.id" class="recent-row" @click="reopenSession(s)">
+                <span class="recent-emoji">{{ getFormatEmoji(s.format) }}</span>
+                <span class="recent-name">{{ s.formatName }}</span>
+                <span class="recent-code">{{ s.roomCode }}</span>
+                <span class="recent-arrow">→</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -97,6 +106,22 @@
         <div class="section-header">
           <h2>Sessions passées</h2>
           <span class="count-badge">{{ history.sessions.length }}</span>
+          <button class="btn-import-txt" @click="showImportText = !showImportText">
+            {{ showImportText ? '✕ Annuler' : '📋 Importer un export' }}
+          </button>
+        </div>
+
+        <!-- Import from text export -->
+        <div v-if="showImportText" class="import-txt-panel">
+          <div class="import-txt-title">Colle un export PI Planning (généré depuis "Exporter")</div>
+          <textarea v-model="importText" class="import-txt-area" rows="8"
+            placeholder="=== PI Planning ===&#10;...&#10;  • [5pts] Ma User Story"></textarea>
+          <div class="import-txt-actions">
+            <button class="btn-do-import-txt" :disabled="!importText.trim()" @click="importFromText">
+              Importer les US →
+            </button>
+            <span class="import-txt-hint">{{ importPreviewCount }} US détectées</span>
+          </div>
         </div>
 
         <div class="history-grid">
@@ -149,8 +174,9 @@
             </div>
 
             <div class="hcard-footer">
-              <button v-if="session.roomCode" class="reopen-btn" @click.stop="reopenSession(session)">
-                Rejoindre la session →
+              <button v-if="session.format === 'pi' && session.piData?.stories?.length"
+                class="open-new-btn" @click.stop="openNewRoom(session)">
+                🚀 Nouvelle salle avec ces US
               </button>
               <button class="expand-btn" @click.stop="toggleSession(session.id)">
                 {{ expandedSession === session.id ? '▲ Réduire' : '▼ Voir les détails' }}
@@ -171,7 +197,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useHistoryStore } from '../stores/history'
@@ -182,9 +208,17 @@ const router = useRouter()
 const auth = useAuthStore()
 const history = useHistoryStore()
 
-const anonymousName = ref('')
-const code = ref('')
+const anonymousName   = ref('')
+const code            = ref('')
 const expandedSession = ref(null)
+const showImportText  = ref(false)
+const importText      = ref('')
+
+const recentSessions = computed(() =>
+  history.sessions.filter(s => s.roomCode).slice(0, 5)
+)
+
+const importPreviewCount = computed(() => parseExportText(importText.value)?.stories?.length ?? 0)
 
 async function handleAnonymousLogin() {
   if (!anonymousName.value.trim()) return
@@ -231,6 +265,63 @@ function reopenSession(session) {
   const routes = { retro: '/retro', dod: '/dod', pi: '/pi', vision: '/vision' }
   const path = routes[session.format] || '/retro'
   router.push(`${path}?room=${session.roomCode}`)
+}
+
+function openNewRoom(session) {
+  router.push(`/pi?action=create&importFrom=${session.id}`)
+}
+
+function parseExportText(text) {
+  if (!text?.trim()) return null
+  const stories = []
+  let inStories = false
+  let currentSprintName = null
+  const prioMap = { H: 'high', M: 'medium', L: 'low' }
+  for (const line of text.split('\n')) {
+    const headerM = line.match(/^\[\s*(Sprint \d+|Backlog)\s*[|\]]/)
+    if (headerM) {
+      inStories = true
+      const name = headerM[1].trim()
+      currentSprintName = name === 'Backlog' ? null : name
+      continue
+    }
+    if (line.match(/^\[\s*Risques\s*\]/)) break
+    if (inStories) {
+      const m = line.match(/^\s+•\s+\[(\d+)\s*pts?\](?:\[([HML])\])?\s+(.+)$/)
+      if (m) stories.push({
+        id: `imp-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+        title: m[3].trim(),
+        points: Number(m[1]) || 0,
+        priority: prioMap[m[2]] || 'medium',
+        sprintId: null,
+        sprintName: currentSprintName,
+        author: 'Import',
+        createdAt: Date.now(),
+      })
+    }
+  }
+  if (!stories.length) return null
+  const nameM = text.split('\n')[0]?.match(/^=+\s+(.+?)\s+=+$/)
+  return { name: nameM?.[1] || 'Import', stories }
+}
+
+function importFromText() {
+  const result = parseExportText(importText.value)
+  if (!result) return
+  history.addSession({
+    id: Date.now(),
+    roomCode: null,
+    format: 'pi',
+    formatName: result.name,
+    participantCount: 0,
+    participants: [],
+    noteCount: result.stories.length,
+    actionCount: 0,
+    piData: { stories: result.stories, risks: [], config: null, sprints: [] },
+    createdAt: Date.now(),
+  })
+  importText.value   = ''
+  showImportText.value = false
 }
 
 function deleteSession(id) {
@@ -671,11 +762,12 @@ h1 {
 
 .hcard-footer {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 12px;
 }
 .expand-btn {
-  flex: 1;
+  width: 100%;
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--rs);
@@ -683,23 +775,42 @@ h1 {
   font-size: 11px;
   color: var(--muted);
 }
-.expand-btn:hover {
-  background: var(--surface2);
-}
-.reopen-btn {
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-b);
-  color: var(--accent);
+.expand-btn:hover { background: var(--surface2); }
+.open-new-btn {
+  width: 100%;
+  background: rgba(96,165,250,0.08);
+  border: 1px solid rgba(96,165,250,0.25);
   border-radius: var(--rs);
-  padding: 8px 14px;
+  padding: 8px;
   font-size: 11px;
   font-weight: 600;
-  white-space: nowrap;
+  color: var(--cont);
 }
-.reopen-btn:hover {
-  background: var(--accent);
-  color: #fff;
-}
+.open-new-btn:hover { background: rgba(96,165,250,0.16); }
+
+/* Recent sessions in join-card */
+.recent-sessions { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; max-height: 200px; overflow-y: auto; }
+.recent-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.recent-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--rs); cursor: pointer; transition: background .15s; font-size: 12px; }
+.recent-row:hover { background: var(--surface2); }
+.recent-emoji { font-size: 14px; flex-shrink: 0; }
+.recent-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-code { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: .08em; flex-shrink: 0; }
+.recent-arrow { color: var(--muted); font-size: 11px; flex-shrink: 0; }
+
+/* Import from text */
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.btn-import-txt { margin-left: auto; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted2); border-radius: var(--rs); padding: 6px 12px; font-size: 11px; font-weight: 600; }
+.btn-import-txt:hover { border-color: var(--accent-b); color: var(--accent); }
+.import-txt-panel { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r); padding: 16px; margin-bottom: 20px; }
+.import-txt-title { font-size: 12px; color: var(--muted2); margin-bottom: 10px; }
+.import-txt-area { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--rs); padding: 10px 12px; font-size: 12px; font-family: monospace; resize: vertical; box-sizing: border-box; color: var(--text); }
+.import-txt-area:focus { border-color: var(--accent-b); outline: none; }
+.import-txt-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.btn-do-import-txt { background: var(--accent); color: #fff; border: none; border-radius: var(--rs); padding: 8px 18px; font-size: 13px; font-weight: 700; }
+.btn-do-import-txt:not(:disabled):hover { opacity: .85; }
+.btn-do-import-txt:disabled { opacity: .3; cursor: not-allowed; }
+.import-txt-hint { font-size: 11px; color: var(--muted2); }
 
 .hcard-body {
   margin-top: 16px;

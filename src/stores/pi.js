@@ -37,11 +37,15 @@ export const usePIStore = defineStore('pi', () => {
     if (socket) socket.disconnect()
     socket = io(`${BACKEND_URL}/pi`, {
       autoConnect: false, reconnection: true,
-      reconnectionAttempts: 5, reconnectionDelay: 1000,
+      reconnectionAttempts: Infinity, reconnectionDelay: 1000, reconnectionDelayMax: 10000,
       auth: { token },
     })
 
-    socket.on('connect',       () => { connected.value = true })
+    socket.on('connect', () => {
+      connected.value = true
+      // Auto-rejoin the room after a reconnect (socket dropped while page was open)
+      if (room.value?.code) socket.emit('room:join', { code: room.value.code })
+    })
     socket.on('disconnect',    () => { connected.value = false })
     socket.on('error',         (d) => { error.value = d.message })
     socket.on('connect_error', (e) => { error.value = `Connexion impossible: ${e.message}` })

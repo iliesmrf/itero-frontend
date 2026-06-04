@@ -37,7 +37,7 @@
                 type="number" min="0" :max="workingDays(sprint.startDate, sprint.endDate)"
                 class="cap-input"
                 :value="getCapacity(p, sprint.id)"
-                @change="store.setCapacity(sprint.id, $event.target.value)"
+                @change="setCapacity(sprint.id, $event, workingDays(sprint.startDate, sprint.endDate))"
                 placeholder="0"
               />
               <span v-else class="cap-val">{{ getCapacity(p, sprint.id) || '—' }}</span>
@@ -90,6 +90,13 @@ const allParticipants = computed(() => {
 
 function getCapacity(user, sprintId) {
   return store.room?.capacity?.[user]?.[sprintId] || 0
+}
+
+function setCapacity(sprintId, event, maxDays) {
+  const raw = Number(event.target.value) || 0
+  const val = Math.min(Math.max(0, raw), maxDays)
+  event.target.value = val
+  store.setCapacity(sprintId, val)
 }
 
 function userTotal(user) {

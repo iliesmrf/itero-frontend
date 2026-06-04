@@ -71,7 +71,10 @@ function finish() {
     summary: null,
     actions: [],
     piData: {
-      stories: Object.values(pi.room?.stories || {}),
+      stories: Object.values(pi.room?.stories || {}).map(s => ({
+        ...s,
+        sprintName: pi.sprints.find(sp => sp.id === s.sprintId)?.name || null,
+      })),
       risks:   Object.values(pi.room?.risks   || {}),
       config:  pi.room?.config  || null,
       sprints: pi.room?.sprints || [],
@@ -84,6 +87,33 @@ function finish() {
 
 watch(() => pi.room?.step, (s) => { if (s != null && s !== currentStep.value) currentStep.value = s })
 watch(() => pi.error, (e) => { if (e) { showToast(e); pi.clearError() } })
+
+// Persist to history as soon as the room is joined (not only on finish)
+// finish() will overwrite this entry with full data via the same roomCode upsert.
+watch(() => pi.room?.code, (code) => {
+  if (!code) return
+  historyStore.addSession({
+    id: Date.now(),
+    roomCode: code,
+    format: 'pi',
+    formatName: pi.room?.config?.name || 'PI Planning',
+    participantCount: Object.keys(pi.room?.participants || {}).length,
+    participants: Object.keys(pi.room?.participants || {}),
+    noteCount: Object.keys(pi.room?.stories || {}).length,
+    actionCount: Object.keys(pi.room?.risks || {}).length,
+    piData: null,
+    createdAt: Date.now(),
+  })
+  const importFromId = Number(route.query.importFrom)
+  if (importFromId) {
+    const session = historyStore.sessions.find(s => s.id === importFromId)
+    if (session?.piData?.stories?.length) {
+      for (const s of session.piData.stories) {
+        pi.addStory(s.title, s.points, null, s.priority)
+      }
+    }
+  }
+}, { once: true })
 
 onMounted(() => {
   pi.initSocket(auth.token)

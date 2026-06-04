@@ -77,6 +77,22 @@ function finish() {
 watch(() => vision.room?.step, (s) => { if (s != null && s !== currentStep.value) currentStep.value = s })
 watch(() => vision.error, (e) => { if (e) { showToast(e); vision.clearError() } })
 
+watch(() => vision.room?.code, (code) => {
+  if (!code) return
+  historyStore.addSession({
+    id: Date.now(),
+    roomCode: code,
+    format: 'vision',
+    formatName: `Vision — ${vision.template?.name || 'Produit'}`,
+    participantCount: Object.keys(vision.room?.participants || {}).length,
+    participants: Object.keys(vision.room?.participants || {}),
+    noteCount: 0,
+    actionCount: 0,
+    piData: null,
+    createdAt: Date.now(),
+  })
+}, { once: true })
+
 onMounted(() => {
   vision.initSocket(auth.token)
   const action   = route.query.action

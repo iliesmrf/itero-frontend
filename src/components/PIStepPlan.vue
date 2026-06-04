@@ -182,7 +182,8 @@ function dropIn(sprintId) {
 
 function doImport() {
   for (const s of selectedImportStories.value) {
-    store.addStory(s.title, s.points, null, s.priority)
+    const sprint = s.sprintName ? store.sprints.find(sp => sp.name === s.sprintName) : null
+    store.addStory(s.title, s.points, sprint?.id || null, s.priority)
   }
   showImport.value   = false
   importSelected.value = null

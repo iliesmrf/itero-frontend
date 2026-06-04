@@ -29,7 +29,9 @@ export const useHistoryStore = defineStore('history', () => {
     }
   }
 
-  // Add a session to history
+  // Add or update a session in history.
+  // When a roomCode is present, always replaces the existing entry for that room
+  // so sessions saved on-join can be enriched later by finish().
   function addSession(session) {
     const entry = {
       id: session.id || Date.now(),
@@ -46,15 +48,15 @@ export const useHistoryStore = defineStore('history', () => {
       createdAt: session.createdAt || Date.now(),
     }
 
-    // Remove duplicates (same room code and similar timestamp)
-    sessions.value = sessions.value.filter(s =>
-      !(s.roomCode === entry.roomCode && Math.abs(s.createdAt - entry.createdAt) < 60000)
-    )
+    if (entry.roomCode) {
+      // Upsert by roomCode — keep the original createdAt if one already exists
+      const existing = sessions.value.find(s => s.roomCode === entry.roomCode)
+      if (existing) entry.createdAt = existing.createdAt
+      sessions.value = sessions.value.filter(s => s.roomCode !== entry.roomCode)
+    }
 
-    // Add to beginning
     sessions.value.unshift(entry)
 
-    // Keep only recent sessions
     if (sessions.value.length > MAX_HISTORY) {
       sessions.value = sessions.value.slice(0, MAX_HISTORY)
     }

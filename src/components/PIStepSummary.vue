@@ -229,17 +229,18 @@ function copyPlan() {
   if (cfg) lines.push(`${fmtDate(cfg.startDate)} → ${fmtDate(cfg.endDate)}`)
   lines.push(`${store.storyList.length} US · ${totalPoints.value} pts · ${store.riskList.length} risques`)
   lines.push('')
+  const prioChar = { high: 'H', medium: 'M', low: 'L' }
   for (const sprint of store.sprints) {
     const stories = store.storiesBySprint[sprint.id] || []
     lines.push(`[ ${sprint.name} | ${fmtRange(sprint.startDate, sprint.endDate)} ]`)
     lines.push(`Capacité : ${store.sprintPoints[sprint.id] || 0} pts / ${store.sprintCapacity[sprint.id] || 0}j`)
-    if (stories.length) stories.forEach(us => lines.push(`  • [${us.points}pts] ${us.title}`))
+    if (stories.length) stories.forEach(us => lines.push(`  • [${us.points}pts][${prioChar[us.priority] || 'M'}] ${us.title}`))
     else lines.push('  (aucune US)')
     lines.push('')
   }
   if (store.backlogStories.length) {
     lines.push('[ Backlog ]')
-    store.backlogStories.forEach(us => lines.push(`  • [${us.points}pts] ${us.title}`))
+    store.backlogStories.forEach(us => lines.push(`  • [${us.points}pts][${prioChar[us.priority] || 'M'}] ${us.title}`))
     lines.push('')
   }
   if (store.riskList.length) {
