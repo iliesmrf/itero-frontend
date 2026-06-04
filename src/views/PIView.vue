@@ -1,6 +1,7 @@
 <template>
   <div>
-    <TopBar :current-step="currentStep" :steps="piSteps" @goto="gotoStep" />
+    <TopBar :current-step="currentStep" :steps="piSteps" @goto="gotoStep"
+      :store-room="pi.room" :store-connected="pi.connected" :store-leave="pi.leaveRoom" />
     <PIStepIntro      v-if="currentStep === 0" @next="nextStep" />
     <PIStepConfig     v-if="currentStep === 1" />
     <PIStepCapacity   v-if="currentStep === 2" />

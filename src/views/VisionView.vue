@@ -1,6 +1,7 @@
 <template>
   <div>
-    <TopBar :current-step="currentStep" :steps="visionSteps" @goto="gotoStep" />
+    <TopBar :current-step="currentStep" :steps="visionSteps" @goto="gotoStep"
+      :store-room="vision.room" :store-connected="vision.connected" :store-leave="vision.leaveRoom" />
     <VisionStepIntro      v-if="currentStep === 0" @next="nextStep" />
     <VisionStepTemplate   v-if="currentStep === 1" @next="nextStep" />
     <VisionStepContribute v-if="currentStep === 2" />

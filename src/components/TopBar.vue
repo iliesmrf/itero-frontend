@@ -43,47 +43,48 @@ import { useRouter } from 'vue-router'
 import { useRetroStore } from '../stores/retro'
 import { useAuthStore } from '../stores/auth'
 
-const store = useRetroStore()
-const auth = useAuthStore()
+const retro = useRetroStore()
+const auth  = useAuthStore()
 const router = useRouter()
+
 const props = defineProps({
   currentStep: Number,
   steps: {
     type: Array,
     default: () => ['① Intro', '② Format', '③ Collecter', '④ Grouper', '⑤ Voter', '⑥ Actions', '⑦ Résumé'],
   },
+  // optional overrides for non-retro modules
+  storeRoom:      { type: Object,   default: null },
+  storeConnected: { type: Boolean,  default: null },
+  storeLeave:     { type: Function, default: null },
 })
 defineEmits(['goto'])
 
 const showUserMenu = ref(false)
 
-const room      = computed(() => store.room)
-const connected = computed(() => store.connected)
+const room      = computed(() => props.storeRoom      ?? retro.room)
+const connected = computed(() => props.storeConnected ?? retro.connected)
+
 const participants = computed(() => {
   if (!room.value?.participants) return []
   return Object.values(room.value.participants).filter(p => p.name !== auth.user?.name)
 })
 
 const currentUser = computed(() => auth.user || null)
-
 const steps = computed(() => props.steps)
 
 function copyLink() {
-  const url = `${location.origin}${location.pathname}?room=${store.room?.code}`
+  const url = `${location.origin}${location.pathname}?room=${room.value?.code}`
   navigator.clipboard.writeText(url).then(() => {}).catch(() => {})
 }
 
-function toggleUserMenu() {
-  showUserMenu.value = !showUserMenu.value
-}
-
-function closeUserMenu() {
-  showUserMenu.value = false
-}
+function toggleUserMenu() { showUserMenu.value = !showUserMenu.value }
+function closeUserMenu()  { showUserMenu.value = false }
 
 async function handleLeaveRoom() {
   closeUserMenu()
-  store.leaveRoom()
+  if (props.storeLeave) props.storeLeave()
+  else retro.leaveRoom()
   router.push('/')
 }
 

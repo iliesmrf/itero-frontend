@@ -32,6 +32,11 @@ const router = createRouter({
       component: () => import('../views/VisionView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/join',
+      component: () => import('../views/JoinView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

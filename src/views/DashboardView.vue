@@ -208,7 +208,7 @@ function createVision() {
 
 function joinRoom() {
   if (code.value.length < 4) return
-  router.push(`/retro?room=${code.value}`)
+  router.push(`/join?room=${code.value}`)
 }
 
 function toggleSession(id) {
