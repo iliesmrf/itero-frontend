@@ -27,6 +27,11 @@ const router = createRouter({
       component: () => import('../views/PIView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/vision',
+      component: () => import('../views/VisionView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

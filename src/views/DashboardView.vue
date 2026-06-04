@@ -65,6 +65,14 @@
           </div>
         </div>
 
+        <div class="action-card vision-card" @click="createVision">
+          <div class="action-icon">🔭</div>
+          <div class="action-content">
+            <div class="action-title">Vision Produit</div>
+            <div class="action-desc">Définissez collaborativement la vision de votre produit</div>
+          </div>
+        </div>
+
         <div class="action-card join-card">
           <div class="action-icon">🔗</div>
           <div class="action-content">
@@ -194,6 +202,10 @@ function createPI() {
   router.push('/pi?action=create')
 }
 
+function createVision() {
+  router.push('/vision?action=create')
+}
+
 function joinRoom() {
   if (code.value.length < 4) return
   router.push(`/retro?room=${code.value}`)
@@ -221,6 +233,7 @@ function formatDate(ts) {
 
 function getFormatEmoji(formatId) {
   if (formatId === 'pi') return '🗓️'
+  if (formatId === 'vision') return '🔭'
   return RETRO_FORMATS[formatId]?.emoji || '🔄'
 }
 
@@ -462,6 +475,14 @@ h1 {
 .pi-card:hover {
   background: rgba(96,165,250,0.14);
   border-color: rgba(96,165,250,0.4);
+}
+.vision-card {
+  background: rgba(232,121,249,0.06);
+  border-color: rgba(232,121,249,0.2);
+}
+.vision-card:hover {
+  background: rgba(232,121,249,0.14);
+  border-color: rgba(232,121,249,0.4);
 }
 .join-card {
   cursor: default;
