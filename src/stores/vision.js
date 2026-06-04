@@ -87,15 +87,8 @@ export const useVisionStore = defineStore('vision', () => {
 
   function addContribution(sectionKey, text) {
     if (!room.value || !text.trim()) return
-    const contribution = {
-      id:        `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      text:      text.trim(),
-      author:    me.value?.name || 'Anonyme',
-      createdAt: Date.now(),
-    }
-    if (!room.value.contributions[sectionKey]) room.value.contributions[sectionKey] = {}
-    room.value.contributions[sectionKey][contribution.id] = contribution
-    socket?.emit('vision:contribute', { sectionKey, contribution })
+    // Don't add locally — server creates the canonical ID and broadcasts vision:contribution:added.
+    socket?.emit('vision:contribute', { sectionKey, contribution: { text: text.trim() } })
   }
 
   function deleteContribution(sectionKey, contribId) {

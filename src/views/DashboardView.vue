@@ -148,9 +148,14 @@
               </div>
             </div>
 
-            <button class="expand-btn" @click.stop="toggleSession(session.id)">
-              {{ expandedSession === session.id ? '▲ Réduire' : '▼ Voir les détails' }}
-            </button>
+            <div class="hcard-footer">
+              <button v-if="session.roomCode" class="reopen-btn" @click.stop="reopenSession(session)">
+                Rejoindre la session →
+              </button>
+              <button class="expand-btn" @click.stop="toggleSession(session.id)">
+                {{ expandedSession === session.id ? '▲ Réduire' : '▼ Voir les détails' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -184,6 +189,13 @@ const expandedSession = ref(null)
 async function handleAnonymousLogin() {
   if (!anonymousName.value.trim()) return
   await auth.loginAnonymous(anonymousName.value.trim())
+  if (auth.isAuthenticated) {
+    const pendingUrl = localStorage.getItem('itero_pending_url')
+    if (pendingUrl) {
+      localStorage.removeItem('itero_pending_url')
+      router.push(pendingUrl)
+    }
+  }
 }
 
 async function handleLogout() {
@@ -213,6 +225,12 @@ function joinRoom() {
 
 function toggleSession(id) {
   expandedSession.value = expandedSession.value === id ? null : id
+}
+
+function reopenSession(session) {
+  const routes = { retro: '/retro', dod: '/dod', pi: '/pi', vision: '/vision' }
+  const path = routes[session.format] || '/retro'
+  router.push(`${path}?room=${session.roomCode}`)
 }
 
 function deleteSession(id) {
@@ -651,18 +669,36 @@ h1 {
   color: var(--muted2);
 }
 
+.hcard-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
 .expand-btn {
-  width: 100%;
+  flex: 1;
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--rs);
   padding: 8px;
   font-size: 11px;
   color: var(--muted);
-  margin-top: 12px;
 }
 .expand-btn:hover {
   background: var(--surface2);
+}
+.reopen-btn {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-b);
+  color: var(--accent);
+  border-radius: var(--rs);
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.reopen-btn:hover {
+  background: var(--accent);
+  color: #fff;
 }
 
 .hcard-body {

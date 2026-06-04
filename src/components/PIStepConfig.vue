@@ -52,7 +52,7 @@
         <div v-if="previewSprints.length" class="sprint-list">
           <div class="preview-title">
             <span>{{ previewSprints.length }} sprint{{ previewSprints.length > 1 ? 's' : '' }}</span>
-            <span class="preview-total">{{ totalWorkingDays }} jours ouvrés</span>
+            <span class="preview-total">{{ totalWorkingDays }} j ouvrés hors fériés</span>
           </div>
           <div v-for="s in previewSprints" :key="s.id" class="sprint-row">
             <div class="snum">{{ s.name }}</div>
@@ -71,8 +71,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { usePIStore } from '../stores/pi'
-import { generateSprints } from '../stores/pi'
+import { usePIStore, generateSprints } from '../stores/pi'
+import { workingDays } from '../working-days.js'
 
 const store = usePIStore()
 
@@ -117,18 +117,6 @@ const isValid = computed(() =>
 const totalWorkingDays = computed(() =>
   previewSprints.value.reduce((sum, s) => sum + workingDays(s.startDate, s.endDate), 0)
 )
-
-function workingDays(start, end) {
-  const s = new Date(start + 'T00:00:00')
-  const e = new Date(end   + 'T00:00:00')
-  let count = 0, cur = new Date(s)
-  while (cur <= e) {
-    const d = cur.getDay()
-    if (d !== 0 && d !== 6) count++
-    cur.setDate(cur.getDate() + 1)
-  }
-  return count
-}
 
 function fmtDate(d) {
   return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })

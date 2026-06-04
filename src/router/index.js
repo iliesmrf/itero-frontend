@@ -45,11 +45,9 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth) {
     const auth = useAuthStore()
     if (!auth.isAuthenticated) {
-      // Save pending room code before redirecting to auth
-      const roomCode = to.query.room
-      if (roomCode) {
-        localStorage.setItem('itero_pending_room', roomCode)
-      }
+      // Save the full destination path so we can redirect back after auth
+      // (e.g. /pi?room=XXXX → goes directly to PIView, not through JoinView)
+      localStorage.setItem('itero_pending_url', to.fullPath)
       return '/'
     }
   }

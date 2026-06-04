@@ -19,7 +19,7 @@
             <th v-for="sprint in store.sprints" :key="sprint.id" class="th-sprint">
               <div class="sprint-hd">{{ sprint.name }}</div>
               <div class="sprint-dates">{{ fmtRange(sprint.startDate, sprint.endDate) }}</div>
-              <div class="sprint-wd">{{ workingDays(sprint.startDate, sprint.endDate) }}j ouvrés</div>
+              <div class="sprint-wd">{{ workingDays(sprint.startDate, sprint.endDate) }}j (hors fériés)</div>
             </th>
             <th class="th-total">Total</th>
           </tr>
@@ -76,6 +76,7 @@
 <script setup>
 import { computed } from 'vue'
 import { usePIStore } from '../stores/pi'
+import { workingDays } from '../working-days.js'
 
 const store = usePIStore()
 
@@ -114,17 +115,6 @@ function capColor(sprintId) {
   return 'var(--start)'
 }
 
-function workingDays(start, end) {
-  const s = new Date(start + 'T00:00:00')
-  const e = new Date(end   + 'T00:00:00')
-  let count = 0, cur = new Date(s)
-  while (cur <= e) {
-    const d = cur.getDay()
-    if (d !== 0 && d !== 6) count++
-    cur.setDate(cur.getDate() + 1)
-  }
-  return count
-}
 
 function fmtRange(s, e) {
   const fmt = (d) => new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })

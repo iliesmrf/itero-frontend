@@ -34,9 +34,9 @@ onMounted(async () => {
   await auth.handleCallback(token)
 
   if (auth.isAuthenticated) {
-    const roomCode = localStorage.getItem('itero_pending_room')
-    localStorage.removeItem('itero_pending_room')
-    router.replace(roomCode ? `/join?room=${roomCode}` : '/')
+    const pendingUrl = localStorage.getItem('itero_pending_url')
+    localStorage.removeItem('itero_pending_url')
+    router.replace(pendingUrl || '/')
   } else {
     error.value = auth.error || 'Connexion échouée.'
   }
