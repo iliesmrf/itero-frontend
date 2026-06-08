@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Cercle de fond -->
+  <circle cx="50" cy="50" r="45" fill="url(#grad)"/>
+
+  <!-- Symbole d'itération (flèches circulaires) -->
+  <g fill="none" stroke="white" stroke-width="6" stroke-linecap="round">
+    <!-- Flèche supérieure droite -->
+    <path d="M 65 25 A 20 20 0 0 1 75 45" />
+    <path d="M 65 25 L 70 18 M 65 25 L 58 20" />
+
+    <!-- Flèche inférieure gauche -->
+    <path d="M 35 75 A 20 20 0 0 1 25 55" />
+    <path d="M 35 75 L 30 82 M 35 75 L 42 80" />
+  </g>
+
+  <!-- Point central (symbole de focus) -->
+  <circle cx="50" cy="50" r="8" fill="white"/>
+</svg>

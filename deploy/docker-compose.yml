@@ -1,0 +1,156 @@
+services:
+  # Vault - Gestion des secrets
+  vault:
+    image: hashicorp/vault:1.17
+    container_name: itero-vault
+    restart: unless-stopped
+    ports:
+      - "8200:8200"
+    env_file:
+      - .env
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_TOKEN:-myroot}
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      VAULT_ADDR: http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/file
+      - ./vault/init-vault.sh:/docker-entrypoint.d/init-vault.sh:ro
+    networks:
+      - itero-network
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Base de données MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: itero-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-itero}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-itero_password_2024}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-itero}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - itero-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Interface MongoDB (optionnel - à commenter sur VPS si ressources limitées)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: itero-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER:-itero}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD:-itero_password_2024}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USER:-itero}:${MONGO_PASSWORD:-itero_password_2024}@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-admin123}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - itero-network
+
+  # Reverse Proxy HTTPS avec Caddy
+  caddy:
+    image: caddy:2-alpine
+    container_name: itero-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    env_file:
+      - .env
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - itero-network
+    depends_on:
+      - backend
+      - frontend
+
+  # Backend NestJS
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: itero-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN:-myroot}
+      MONGODB_URI: mongodb://${MONGO_USER:-itero}:${MONGO_PASSWORD:-itero_password_2024}@mongodb:27017/${MONGO_DB:-itero}?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    networks:
+      - itero-network
+    command: npm start
+
+  # Frontend Vue.js
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ${FRONTEND_URL:-https://itero.mantiq.fr}
+    container_name: itero-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - itero-network
+
+volumes:
+  vault_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  itero-network:
+    driver: bridge

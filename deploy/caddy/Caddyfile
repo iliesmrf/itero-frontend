@@ -1,0 +1,89 @@
+# Configuration Caddy pour Itero
+# Gestion automatique des certificats HTTPS via Let's Encrypt
+
+{
+    # Email pour Let's Encrypt (notifications d'expiration)
+    email admin@mantiq.fr
+
+    # Options globales
+    admin off
+}
+
+# Site principal
+itero.mantiq.fr {
+    # En-têtes de sécurité
+    header {
+        # HSTS avec preload
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+        # Protection XSS
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+
+        # CSP (Content Security Policy)
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://itero.mantiq.fr wss://itero.mantiq.fr; font-src 'self' data:;"
+
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Logs
+    log {
+        output file /data/access.log
+        format json
+    }
+
+    # Frontend callback route for OAuth token handling
+    handle /auth/callback {
+        reverse_proxy frontend:80 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Routes API et Auth vers le backend
+    handle /auth/* {
+        reverse_proxy backend:3000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # WebSocket pour Socket.io
+    handle /socket.io/* {
+        reverse_proxy backend:3000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+
+            # Support WebSocket
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+        }
+    }
+
+    # Vault UI (admin uniquement - protéger en production)
+    handle /vault/* {
+        uri strip_prefix /vault
+        reverse_proxy vault:8200 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Frontend (SPA)
+    handle {
+        reverse_proxy frontend:80 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+# Redirection HTTP vers HTTPS (automatique avec Caddy)
+# Pas besoin de configuration explicite
