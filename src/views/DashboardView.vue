@@ -197,7 +197,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useHistoryStore } from '../stores/history'
@@ -217,6 +217,19 @@ const importText      = ref('')
 const recentSessions = computed(() =>
   history.sessions.filter(s => s.roomCode).slice(0, 5)
 )
+
+function redirectPending() {
+  const pendingUrl = localStorage.getItem('itero_pending_url')
+  if (pendingUrl) {
+    localStorage.removeItem('itero_pending_url')
+    router.push(pendingUrl)
+  }
+}
+
+// Handle auth race condition: token exists but fetchMe is async →
+// guard sees isAuthenticated=false → lands here → fetchMe completes → redirect
+onMounted(() => { if (auth.isAuthenticated) redirectPending() })
+watch(() => auth.isAuthenticated, (isAuth) => { if (isAuth) redirectPending() })
 
 const importPreviewCount = computed(() => parseExportText(importText.value)?.stories?.length ?? 0)
 
@@ -595,6 +608,8 @@ h1 {
 }
 .join-card {
   cursor: default;
+  align-items: flex-start;
+  overflow: hidden;
 }
 .join-card:hover {
   transform: none;
@@ -607,6 +622,7 @@ h1 {
 }
 .action-content {
   flex: 1;
+  min-width: 0;
 }
 .action-title {
   font-family: 'Syne', sans-serif;
@@ -623,9 +639,11 @@ h1 {
   display: flex;
   gap: 8px;
   margin-top: 8px;
+  min-width: 0;
 }
 .join-code-input {
   flex: 1;
+  min-width: 0;
   background: var(--surface2);
   border: 1px solid var(--border2);
   border-radius: var(--rs);
